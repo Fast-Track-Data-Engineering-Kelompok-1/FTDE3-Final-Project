@@ -11,7 +11,7 @@ from sqlalchemy.engine import Engine
 
 
 def load_to_postgres_management_payroll(**context):
-    csv_path = os.path.join("/usr/local/airflow","include","data_management_payroll_update.csv")
+    csv_path = os.path.join(os.environ['AIRFLOW_HOME'],"include","data_management_payroll_update.csv")
     try:
         df = pd.read_csv(csv_path)
     except FileNotFoundError:
@@ -23,7 +23,7 @@ def load_to_postgres_management_payroll(**context):
     print(f"Load to {table_name} successful")
 
 def load_to_postgres_performance_management(**context):
-    csv_path = os.path.join("/usr/local/airflow","include","data_performance_management_update.csv")
+    csv_path = os.path.join(os.environ['AIRFLOW_HOME'],"include","data_performance_management_update.csv")
     try:
         df = pd.read_csv(csv_path)
     except FileNotFoundError:
@@ -35,7 +35,7 @@ def load_to_postgres_performance_management(**context):
     print(f"Load to {table_name} successful")
 
 def load_to_mysql_training_development(**context):
-    csv_path = os.path.join("/usr/local/airflow","include","data_training_development_update.csv")
+    csv_path = os.path.join(os.environ['AIRFLOW_HOME'],"include","data_training_development_update.csv")
     try:
         df = pd.read_csv(csv_path)
     except FileNotFoundError:
