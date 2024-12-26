@@ -47,6 +47,9 @@ def transfer_mysql_schema_to_postgres(
 
     for table_name_tuple in tables:
         table_name = table_name_tuple[0]
+        #avoiding another table imported
+        if not "kelompok1" in table_name:
+            continue
         print(f"Transferring table: {table_name}")
         try:
             #Read data in chunks
@@ -115,6 +118,9 @@ def transfer_postgres_schema_to_another_schema(
 
     for table_name_tuple in tables:
         table_name = table_name_tuple[0]
+        #avoiding another table imported
+        if not "kelompok1" in table_name:
+            continue
         print(f"Transferring table: {table_name}")
         try:
             for df_chunk in pd.read_sql_table(
