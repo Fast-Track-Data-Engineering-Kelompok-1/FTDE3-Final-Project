@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: data_source
+    schema: kelompok1_dwh_source
+    tables:
+      - name: kelompok1_management_payroll
+      - name: kelompok1_performance_management
+      - name: kelompok1_recruitment_selection
+      - name: kelompok1_training_development
