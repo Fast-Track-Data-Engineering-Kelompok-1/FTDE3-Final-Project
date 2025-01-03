@@ -4,3 +4,9 @@ apache-airflow-providers-mysql
 apache-airflow-providers-mongo
 pandas
 astronomer-cosmos
+pyspark
+psycopg2-binary
+gspread
+pandas
+gspread_dataframe
+google-auth-oauthlib
