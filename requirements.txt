@@ -2,5 +2,12 @@
 apache-airflow-providers-postgres
 apache-airflow-providers-mysql
 apache-airflow-providers-mongo
+apache-airflow-providers-google
 pandas
 astronomer-cosmos
+pyspark
+psycopg2-binary
+gspread
+pandas
+gspread_dataframe
+oauth2client
