@@ -1,3 +1,5 @@
 pkg-config
 build-essential
 default-libmysqlclient-dev
+librdkafka-dev
+

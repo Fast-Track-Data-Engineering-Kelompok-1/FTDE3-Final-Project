@@ -3,6 +3,7 @@ apache-airflow-providers-postgres
 apache-airflow-providers-mysql
 apache-airflow-providers-mongo
 apache-airflow-providers-google
+apache-airflow-providers-apache-kafka
 pandas
 astronomer-cosmos
 pyspark
@@ -11,3 +12,6 @@ gspread
 pandas
 gspread_dataframe
 oauth2client
+confluent-kafka
+kafka-python-ng
+six
