@@ -17,7 +17,6 @@ def load_to_kafka_recruitment_selection(topic_name:str, **context):
         json_data = data.to_dict(orient='records')
         producer = KafkaProducer(bootstrap_servers=['34.56.65.122'], value_serializer=json_serializer)
 
-
         for data in json_data:
             print(data)
             producer.send(topic_name, data)
