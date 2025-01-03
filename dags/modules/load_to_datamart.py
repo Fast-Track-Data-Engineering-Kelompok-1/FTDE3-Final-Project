@@ -1,15 +1,20 @@
 import pyspark
+import pyspark.pandas as ps
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 import gspread
 from gspread_dataframe import set_with_dataframe
-from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from sqlalchemy.engine import Engine
+from airflow.providers.google.common.hooks.base_google import GoogleBaseHook
+import json
 import os
 
 
 # Membuat SparkSession
-spark = SparkSession.builder \
+spark:SparkSession = SparkSession.builder \
     .config("spark.jars.packages", "org.postgresql:postgresql:42.7.0") \
     .master("local") \
     .appName("PySpark_Postgres").getOrCreate()
@@ -29,14 +34,29 @@ def extract_transform_spark():
         "fact_recruitment": "kelompok1_dwh.fact_recruitment",
         "fact_training": "kelompok1_dwh.fact_training",
     }
+    postgres_hook = PostgresHook(postgres_conn_id="postgres_default")
+    conn = postgres_hook.get_connection("postgres_default")
+    # Extract details
+    username = conn.login  # Username
+    password = conn.password  # Password
+    port = conn.port
+    host = conn.host  # Host
+    dbname = conn.schema  # Database name
 
+    # Print or use the details
+    #print(f"Username: {username}")
+    #print(f"Password: {password}")
+    #print(f"Host: {host}")
+    #print(f"DB Name: {dbname}")
+    
     for view_name, db_table in tables.items():
+
         df = spark.read.format("jdbc") \
-            .option("url", "jdbc:postgresql://34.56.65.122:5432/ftde03") \
+            .option("url", f"jdbc:postgresql://{host}:{port}/{dbname}") \
             .option("driver", "org.postgresql.Driver") \
             .option("dbtable", db_table) \
-            .option("user", "ftde03") \
-            .option("password", "ftde03!@#").load()
+            .option("user", username) \
+            .option("password", password).load()
         df.createOrReplaceTempView(view_name)
 
     # Transformasi Recruitment Data
@@ -174,13 +194,15 @@ def extract_transform_spark():
 
 # Fungsi untuk Memuat Data ke Google Spreadsheet
 def load_to_marts():
-    def save_to_spreadsheet(spark_df, spreadsheet_name):
+    def save_to_spreadsheet(spark_df:DataFrame, spreadsheet_name):
         # Lokasi credentials.json dalam container Docker
-        credentials_path = "/usr/local/airflow/dags/modules/credentials/credentials.json"  
+
+        gcp_hook = GoogleBaseHook(gcp_conn_id="google_cloud_default")
+        cred_dict =json.loads(gcp_hook._get_field('keyfile_dict'))
         
         pandas_df = spark_df.toPandas()
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = Credentials.from_service_account_file(credentials_path, scopes=scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, scope)
         gc = gspread.authorize(creds)
 
         try:
