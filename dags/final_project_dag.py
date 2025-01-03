@@ -49,10 +49,21 @@ with DAG(
     )
     
     # Task untuk Load ke Data Mart (menjalankan extract_transform_spark dan load_to_marts)
-    task_load_to_datamart = PythonOperator(
-        task_id="load_to_datamart",
-        python_callable=lambda: (extract_transform_spark(), load_to_marts()),
-    )
+    with TaskGroup(group_id="load_to_datamart_group") as load_to_datamart_group:
+    # Task untuk menjalankan extract_transform_spark
+        task_extract_transform_spark = PythonOperator(
+            task_id="extract_transform_spark",
+            python_callable=extract_transform_spark,
+        )
+
+        # Task untuk menjalankan load_to_marts
+        task_load_to_marts = PythonOperator(
+            task_id="load_to_marts",
+            python_callable=load_to_marts,
+        )
+
+        # Menentukan urutan, extract_transform_spark dijalankan sebelum load_to_marts
+        task_extract_transform_spark >> task_load_to_marts
     
     # Dependencies
-    tg_load_data >> tg_transfer_db_to_dwh >> tg_dbt >> task_load_to_datamart
+    tg_load_data >> tg_transfer_db_to_dwh >> tg_dbt >> load_to_datamart_group
