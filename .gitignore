@@ -9,4 +9,4 @@ airflow-webserver.pid
 webserver_config.py
 airflow.cfg
 airflow.db
-dags/modules/credentials
+dags/modules/credentials/credentials.json
