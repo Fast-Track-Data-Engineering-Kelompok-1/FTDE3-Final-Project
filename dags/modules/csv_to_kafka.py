@@ -1,9 +1,6 @@
 import os
 import json
-import time
-import kafka
 import pandas as pd
-
 from kafka import KafkaProducer
 
 def json_serializer(data):
