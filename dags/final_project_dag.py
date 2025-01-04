@@ -4,8 +4,10 @@ from airflow.decorators import task
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
+from airflow.providers.apache.kafka.operators.consume import ConsumeFromTopicOperator
 from modules.csv_to_db import load_to_postgres_management_payroll, load_to_postgres_performance_management, load_to_mysql_training_development
 from modules.csv_to_kafka import load_to_kafka_recruitment_selection
+from  modules.kafka_to_mongodb import consume_function
 from modules.db_to_postgres_dwh import transfer_postgres_schema_to_another_schema, transfer_mysql_schema_to_postgres, transfer_mongodb_collections_to_postgres
 from modules.dbt_transform_to_dwh import profile_config, execution_config, DBT_PROJECT_PATH
 from cosmos import DbtTaskGroup, ProjectConfig
@@ -18,12 +20,22 @@ with DAG(
     catchup=False,
     tags=["dbt", "postgres", "mysql", "mongodb", "kafka"],
 ) as dag:
+    
+    with TaskGroup("create_kafka_producer") as tg_kafka_producer:
+        task(load_to_kafka_recruitment_selection)(topic_name="ftde03-datamates")
+    
+    task_kafka_to_mongo = ConsumeFromTopicOperator(
+        task_id = "load_to_mongodb_from_kafka",
+        kafka_config_id = "kafka_default",
+        topics = ["ftde03-datamates"],
+        apply_function = consume_function
+    )
+
     # Group untuk Dump Data ke Database
     with TaskGroup("dump_data_sql") as tg_load_data:
         task(load_to_postgres_management_payroll)(target_schema_name="kelompok1_db")
         task(load_to_postgres_performance_management)(target_schema_name="kelompok1_db")
         task(load_to_mysql_training_development)(target_schema_name="ftde03")
-        task(load_to_kafka_recruitment_selection)(topic_name="ftde03-datamates")
     
     # Group untuk Transfer Data ke Data Warehouse
     with TaskGroup("transfer_data_to_dwh") as tg_transfer_db_to_dwh:
@@ -67,4 +79,4 @@ with DAG(
         task_extract_transform_spark >> task_load_to_marts
     
     # Dependencies
-    tg_load_data >> tg_transfer_db_to_dwh >> tg_dbt >> load_to_datamart_group
+    tg_kafka_producer >> task_kafka_to_mongo >> tg_load_data >> tg_transfer_db_to_dwh >> tg_dbt >> load_to_datamart_group

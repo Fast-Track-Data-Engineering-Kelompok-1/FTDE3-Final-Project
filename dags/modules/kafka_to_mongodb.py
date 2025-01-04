@@ -11,8 +11,9 @@ def get_mongodb_collection():
 
 def consume_function(message, name):
     mongodb_collection = get_mongodb_collection()
-
     key = json.loads(message.key())
     message_content = json.loads(message.value())
+    print("Masuk")
+    print(message)
 
 # to be continued
