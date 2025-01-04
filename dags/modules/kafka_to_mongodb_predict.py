@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+import warnings
 import pandas as pd
 from kafka import KafkaConsumer
 from pymongo import MongoClient
@@ -8,6 +9,8 @@ from airflow.providers.mongo.hooks.mongo import MongoHook
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from modules.model import modelRecruitment
+
+warnings.filterwarnings('ignore')
 
 def get_mongodb_collection():
     # hook = MongoHook(mongo_conn_id="mongodb_default")
