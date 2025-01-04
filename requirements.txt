@@ -15,3 +15,4 @@ oauth2client
 confluent-kafka
 kafka-python-ng
 six
+scikit-learn

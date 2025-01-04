@@ -7,7 +7,7 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.apache.kafka.operators.consume import ConsumeFromTopicOperator
 from modules.csv_to_db import load_to_postgres_management_payroll, load_to_postgres_performance_management, load_to_mysql_training_development
 from modules.csv_to_kafka import load_to_kafka_recruitment_selection
-from  modules.kafka_to_mongodb import consume_function
+from modules.kafka_to_mongodb_predict import predict_load_to_mongodb_from_kafka
 from modules.db_to_postgres_dwh import transfer_postgres_schema_to_another_schema, transfer_mysql_schema_to_postgres, transfer_mongodb_collections_to_postgres
 from modules.dbt_transform_to_dwh import profile_config, execution_config, DBT_PROJECT_PATH
 from cosmos import DbtTaskGroup, ProjectConfig
@@ -24,13 +24,12 @@ with DAG(
     with TaskGroup("create_kafka_producer") as tg_kafka_producer:
         task(load_to_kafka_recruitment_selection)(topic_name="ftde03-datamates")
     
-    task_kafka_to_mongo = ConsumeFromTopicOperator(
-        task_id = "load_to_mongodb_from_kafka",
-        kafka_config_id = "kafka_default",
-        topics = ["ftde03-datamates"],
-        apply_function = consume_function
+    task_kafka_to_mongo = PythonOperator(
+        task_id = "kafka_to_mongodb",
+        python_callable = predict_load_to_mongodb_from_kafka
     )
 
+    
     # Group untuk Dump Data ke Database
     with TaskGroup("dump_data_sql") as tg_load_data:
         task(load_to_postgres_management_payroll)(target_schema_name="kelompok1_db")
