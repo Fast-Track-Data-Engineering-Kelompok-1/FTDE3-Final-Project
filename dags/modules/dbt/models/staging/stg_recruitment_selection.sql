@@ -4,6 +4,7 @@ SELECT
     "Gender",
     "Age",
     "Position",
+    "Predict",    
     "ApplicationDate",
     "Status",
     "InterviewDate",

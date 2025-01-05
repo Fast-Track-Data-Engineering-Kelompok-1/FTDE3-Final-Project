@@ -23,13 +23,10 @@ with DAG(
     
     with TaskGroup("create_kafka_producer") as tg_kafka_producer:
         task(load_to_kafka_recruitment_selection)(topic_name="ftde03-datamates")
-    
-    task_kafka_to_mongo = PythonOperator(
-        task_id = "kafka_to_mongodb",
-        python_callable = predict_load_to_mongodb_from_kafka
-    )
-
-    
+        
+    with TaskGroup("kafka_to_mongo") as tg_kafka_to_mongo:
+        task(predict_load_to_mongodb_from_kafka)()
+        
     # Group untuk Dump Data ke Database
     with TaskGroup("dump_data_sql") as tg_load_data:
         task(load_to_postgres_management_payroll)(target_schema_name="kelompok1_db")
@@ -49,6 +46,13 @@ with DAG(
             postgres_conn_id="postgres_default",
             source_schema_name="ftde03",
             target_schema_name="kelompok1_dwh_source"
+        )
+        task(transfer_mongodb_collections_to_postgres)(
+            mongo_conn_id="mongodb_default",
+            postgres_conn_id="postgres_default",
+            mongo_database="ftde3",
+            target_schema_name="kelompok1_dwh_source",
+            chunksize=2000
         )
     
     # Group untuk Transformasi Data ke DWH menggunakan DBT
@@ -78,4 +82,4 @@ with DAG(
         task_extract_transform_spark >> task_load_to_marts
     
     # Dependencies
-    tg_kafka_producer >> task_kafka_to_mongo >> tg_load_data >> tg_transfer_db_to_dwh >> tg_dbt >> load_to_datamart_group
+    tg_kafka_producer >> tg_kafka_to_mongo >> tg_load_data >> tg_transfer_db_to_dwh >> tg_dbt >> load_to_datamart_group

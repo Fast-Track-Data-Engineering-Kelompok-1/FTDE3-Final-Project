@@ -80,7 +80,8 @@ def extract_transform_spark():
         CAST(int_date.quarter AS INT) AS interview_quarter,
         CAST(int_date.month AS INT) AS interview_month,
         CAST(int_date.day AS INT) AS interview_day,
-        fact_recruitment.offerstatus
+        fact_recruitment.offerstatus,
+        fact_recruitment.predict
     FROM fact_recruitment
     LEFT JOIN dim_candidate ON fact_recruitment.candidate_key = dim_candidate.candidate_key
     LEFT JOIN dim_date AS app_date ON fact_recruitment.application_date_key = app_date.date_key

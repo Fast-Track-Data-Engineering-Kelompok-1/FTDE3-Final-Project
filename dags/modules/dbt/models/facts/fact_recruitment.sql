@@ -5,7 +5,8 @@ SELECT
     c.candidate_key,
     app_date.date_key AS application_date_key,
     int_date.date_key AS interview_date_key,
-    rs."OfferStatus" AS OfferStatus
+    rs."OfferStatus" AS OfferStatus,
+    rs."Predict" AS Predict
 FROM {{ ref('stg_recruitment_selection') }} rs
 JOIN {{ ref('dim_candidate') }} c ON rs."CandidateID" = c.CandidateID
 LEFT JOIN {{ ref('dim_date') }} app_date ON CAST(rs."ApplicationDate" AS DATE) = app_date.date_day
