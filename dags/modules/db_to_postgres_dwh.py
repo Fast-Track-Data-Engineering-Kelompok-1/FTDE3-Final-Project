@@ -1,6 +1,7 @@
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.mongo.hooks.mongo import MongoHook
+from pymongo import MongoClient
 import json
 import pandas as pd
 from sqlalchemy import create_engine
@@ -155,9 +156,16 @@ def transfer_mongodb_collections_to_postgres(
         chunksize: Number of documents to fetch and insert at a time.
     """
 
-    mongo_hook = MongoHook(conn_id=mongo_conn_id)
+    mongo_hook = MongoHook(mongo_conn_id=mongo_conn_id)
     postgres_hook = PostgresHook(postgres_conn_id=postgres_conn_id)
     postgres_engine = create_engine(postgres_hook.get_uri())
+
+    connection = mongo_hook.get_connection("mongodb_default")
+
+    hostname = connection.host
+    port = connection.port
+    username = connection.login
+    password = connection.password
 
     try:
         with postgres_engine.connect() as conn:
@@ -167,12 +175,19 @@ def transfer_mongodb_collections_to_postgres(
         print("Skipping schema creation",e)
     print(f"Schema {target_schema_name} ensured to exist.")
 
-    mongo_client = mongo_hook.get_conn()
-    db = mongo_client[mongo_database]
+    server = MongoClient(f'mongodb://{username}:{password}@{hostname}:{port}/')
+    db = server.admin
+    server_status = db.command("ping")
+    print("MongoDB connection successful:", server_status)
+
+    db = server[mongo_database]
 
     collection_names = db.list_collection_names()
-
+    print(collection_names)
     for mongo_collection in collection_names:
+        if not "kelompok1" in mongo_collection:
+            continue
+        print(mongo_collection)
         postgres_table = mongo_collection  # Use collection name as table name
         print(f"Transferring collection: {mongo_collection} to table: {postgres_table}")
         try:
@@ -191,12 +206,9 @@ def transfer_mongodb_collections_to_postgres(
                 if "_id" in df.columns:
                     df["_id"] = df["_id"].astype(str)
 
-                for col in df.columns:
-                    if df[col].dtype == 'object':
-                        try:
-                            df[col] = df[col].apply(json.dumps)
-                        except TypeError:
-                            df[col] = df[col].astype(str)
+                #for col in df.columns:
+                #    if df[col].dtype == 'object':
+                #        df[col] = df[col].astype(str)
 
                 df.to_sql(
                     postgres_table,
@@ -211,5 +223,4 @@ def transfer_mongodb_collections_to_postgres(
 
         except Exception as e:
             print(f"Error transferring collection {mongo_collection}: {e}")
-        finally:
-            mongo_client.close()
+    server.close()
